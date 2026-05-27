@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IPTV - Free Live TV Channels</title>
+  <meta name="description" content="Watch free live TV channels in your browser with category and country filters." />
+  <meta name="keywords" content="IPTV, live tv, free tv, m3u, m3u8, bangladesh tv, online streaming" />
+  <meta property="og:title" content="IPTV - Free Live TV Channels" />
+  <meta property="og:description" content="Stream free live channels instantly from your browser." />
+  <meta property="og:image" content="https://maruf.github.io/IPTV/assets/icons/og-image.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="alternate icon" href="assets/icons/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-wrap">
+      <h1>IPTV</h1>
+      <span class="tagline">Free TV Channels Web Player</span>
+    </div>
+    <a class="playlist-link" href="playlist.m3u" download>Download M3U</a>
+  </header>
+
+  <main class="container">
+    <section class="toolbar">
+      <div class="search-wrap">
+        <input id="searchInput" type="search" placeholder="Search channels..." autocomplete="off" />
+      </div>
+      <div class="filter-wrap">
+        <select id="countryFilter" aria-label="Filter by country">
+          <option value="all">All Countries</option>
+        </select>
+      </div>
+    </section>
+
+    <nav id="categoryTabs" class="tabs" aria-label="Category tabs">
+      <button class="tab active" data-category="all">All</button>
+      <button class="tab" data-category="news">News</button>
+      <button class="tab" data-category="sports">Sports</button>
+      <button class="tab" data-category="entertainment">Entertainment</button>
+      <button class="tab" data-category="music">Music</button>
+      <button class="tab" data-category="kids">Kids</button>
+      <button class="tab" data-category="religious">Religious</button>
+      <button class="tab" data-category="movies">Movies</button>
+      <button class="tab" data-category="bangladeshi">Bangladeshi</button>
+      <button class="tab" data-category="favorites">Favorites</button>
+    </nav>
+
+    <section class="status-row">
+      <span id="resultCount">Loading channels...</span>
+      <span id="lastWatchedLabel" class="muted"></span>
+    </section>
+
+    <section id="channelGrid" class="channel-grid" aria-live="polite"></section>
+  </main>
+
+  <template id="channelCardTemplate">
+    <article class="channel-card">
+      <div class="logo-wrap">
+        <img class="channel-logo" alt="" loading="lazy" />
+        <div class="logo-fallback"></div>
+        <span class="live-dot">LIVE</span>
+      </div>
+      <div class="card-body">
+        <h3 class="channel-name"></h3>
+        <p class="channel-meta">
+          <span class="badge category-badge"></span>
+          <span class="country-chip"></span>
+        </p>
+        <div class="card-actions">
+          <button class="btn btn-watch" type="button">Watch</button>
+          <button class="btn btn-favorite" type="button">Favorite</button>
+          <button class="btn btn-share" type="button">Share</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script src="assets/js/channels.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
