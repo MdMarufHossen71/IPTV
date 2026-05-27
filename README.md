@@ -63,6 +63,19 @@ Use any IPTV app and add the M3U URL above.
 - `player.html` supports HLS via HLS.js and non-HLS direct playback.
 - GitHub Actions deploy workflow is in `.github/workflows/deploy.yml`.
 
+## 🧪 Stream Health Check
+Use the included checker to quickly test stream URLs before publishing:
+
+```bash
+python scripts/check_streams.py
+```
+
+To test only the first N channels:
+
+```bash
+python scripts/check_streams.py 20
+```
+
 ## ⚠️ Disclaimer
 This project does not host any video content. All streams are publicly available on the internet. Stream availability can change without notice.
 
