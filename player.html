@@ -6,41 +6,85 @@
   <title>IPTV Player</title>
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
   <link rel="alternate icon" href="assets/icons/favicon.ico" />
-  <link rel="stylesheet" href="https://vjs.zencdn.net/8.16.1/video-js.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <style>
-    .player-layout { display: grid; gap: 12px; grid-template-columns: 1fr; }
-    .player-panel, .sidebar { background: #1d1d1d; border: 1px solid #333; border-radius: 12px; padding: 12px; }
-    .player-box { aspect-ratio: 16/9; width: 100%; }
-    .video-js { width: 100%; height: 100%; border-radius: 10px; }
-    .back-link { display: inline-block; margin-bottom: 10px; color: #fff; text-decoration: none; border: 1px solid #333; padding: 8px 12px; border-radius: 8px; }
-    .related-list { display: grid; gap: 8px; }
-    .related-item { border: 1px solid #333; border-radius: 8px; padding: 8px; background: #232323; cursor: pointer; }
+    .player-page { padding: 12px 14px 48px; max-width: 1400px; margin: 0 auto; }
+    .back-btn { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); text-decoration: none;
+                border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 0.85rem;
+                margin-bottom: 14px; transition: border-color var(--transition), color var(--transition); }
+    .back-btn:hover { border-color: var(--accent); color: var(--text); }
+
+    .player-layout { display: grid; gap: 14px; grid-template-columns: 1fr; }
     @media (min-width: 1000px) { .player-layout { grid-template-columns: 2fr 1fr; } }
+
+    .player-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .plyr-wrap { background: #000; aspect-ratio: 16/9; }
+    video { width: 100%; height: 100%; }
+    .player-info { padding: 14px; }
+    .player-channel-name { font-size: 1.2rem; font-weight: 700; margin: 0 0 6px; }
+    .player-channel-desc { color: var(--muted); font-size: 0.88rem; margin: 0 0 10px; }
+    .player-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+    .error-msg { color: #ef4444; font-size: 0.88rem; margin-top: 10px; min-height: 20px; }
+
+    .sidebar { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+    .sidebar h3 { margin: 0 0 12px; font-size: 1rem; }
+    .related-list { display: grid; gap: 8px; max-height: 480px; overflow-y: auto; }
+    .related-item { background: #222; border: 1px solid var(--border); border-radius: 8px; padding: 10px;
+                    cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.85rem;
+                    transition: border-color var(--transition), background var(--transition); }
+    .related-item:hover { border-color: var(--accent); background: var(--card-hover); }
+    .related-logo { width: 36px; height: 36px; object-fit: contain; border-radius: 4px; background: #111; flex-shrink: 0; }
+    .related-name { font-weight: 500; }
   </style>
 </head>
 <body>
-  <main class="container">
-    <a class="back-link" href="index.html">← Back to Homepage</a>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">📺</div>
+      <div class="brand-text">
+        <span class="brand-name">IPTV</span>
+        <span class="brand-sub">Player</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="player-page">
+    <a class="back-btn" href="index.html">← Back</a>
+
     <div class="player-layout">
       <section class="player-panel">
-        <div class="player-box">
-          <video id="livePlayer" class="video-js vjs-default-skin" controls playsinline></video>
+        <div class="plyr-wrap">
+          <video id="livePlayer" playsinline controls></video>
         </div>
-        <h2 id="channelName"></h2>
-        <p id="channelDescription" class="muted"></p>
-        <p id="errorMessage" class="muted"></p>
+        <div class="player-info">
+          <h2 class="player-channel-name" id="playerName">Loading…</h2>
+          <p class="player-channel-desc" id="playerDesc"></p>
+          <div class="player-meta">
+            <span class="cat-badge" id="playerCat"></span>
+            <span class="country-badge" id="playerCountry"></span>
+          </div>
+          <p class="error-msg" id="errorMsg"></p>
+        </div>
       </section>
+
       <aside class="sidebar">
         <h3>Related Channels</h3>
-        <div id="relatedChannels" class="related-list"></div>
+        <div id="relatedList" class="related-list"></div>
       </aside>
     </div>
-  </main>
+  </div>
+
+  <footer class="site-footer">
+    <p>Built with ❤️ by <a href="https://mdmarufhossen71.site" target="_blank" rel="noopener">Md Maruf Hossen</a> &bull; <a href="https://github.com/MdMarufHossen71/IPTV" target="_blank" rel="noopener">GitHub</a></p>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.14/dist/hls.min.js"></script>
-  <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
   <script src="assets/js/channels.js"></script>
+  <script src="assets/js/verify.js"></script>
   <script src="assets/js/player.js"></script>
 </body>
 </html>

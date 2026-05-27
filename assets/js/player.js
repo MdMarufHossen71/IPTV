@@ -1,108 +1,136 @@
-const params = new URLSearchParams(window.location.search);
+const params    = new URLSearchParams(location.search);
 const channelId = params.get("id");
-const playerEl = document.getElementById("livePlayer");
-const channelNameEl = document.getElementById("channelName");
-const channelDescEl = document.getElementById("channelDescription");
-const errorMessageEl = document.getElementById("errorMessage");
-const relatedWrap = document.getElementById("relatedChannels");
 
-let retryCount = 0;
-let hls;
-const MAX_RETRY = 3;
+const videoEl    = document.getElementById("livePlayer");
+const nameEl     = document.getElementById("playerName");
+const descEl     = document.getElementById("playerDesc");
+const catEl      = document.getElementById("playerCat");
+const countryEl  = document.getElementById("playerCountry");
+const errorEl    = document.getElementById("errorMsg");
+const relatedEl  = document.getElementById("relatedList");
+
+let plyr = null;
+let hlsInstance = null;
+let retries = 0;
+const MAX_RETRIES = 3;
 const RETRY_DELAY = 5000;
 
-const vjs = videojs(playerEl, {
-  controls: true,
-  fluid: true,
-  preload: "auto",
-  controlBar: {
-    volumePanel: { inline: false }
-  }
-});
-
-function stopPlayback() {
-  if (hls) {
-    hls.destroy();
-    hls = null;
-  }
-  vjs.pause();
-  vjs.src({ src: "", type: "" });
-}
-
-function playChannelStream(url) {
-  stopPlayback();
-  errorMessageEl.textContent = "";
-
-  const isHls = url.includes(".m3u8");
-  if (isHls && Hls.isSupported()) {
-    hls = new Hls();
-    hls.loadSource(url);
-    hls.attachMedia(vjs.tech().el());
-    hls.on(Hls.Events.ERROR, (_, data) => {
-      if (data.fatal) retryPlayback(url);
-    });
-    vjs.play().catch(() => {});
-    return;
-  }
-
-  const type = isHls ? "application/x-mpegURL" : "video/mp4";
-  vjs.src({ src: url, type });
-  vjs.ready(() => {
-    vjs.play().catch(() => retryPlayback(url));
+/* ── Plyr init ───────────────────────────────────────────── */
+function initPlyr() {
+  plyr = new Plyr(videoEl, {
+    controls: ["play", "progress", "current-time", "mute", "volume", "fullscreen"],
+    autoplay: false,
+    ratio: "16:9",
   });
-
-  vjs.on("error", () => retryPlayback(url));
 }
 
-function retryPlayback(url) {
-  if (retryCount >= MAX_RETRY) {
-    errorMessageEl.textContent = "This stream appears unavailable. Please try another channel.";
+/* ── stream playback ─────────────────────────────────────── */
+function stopAll() {
+  if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+  if (plyr) plyr.pause();
+}
+
+function playStream(url) {
+  stopAll();
+  errorEl.textContent = "";
+  retries = 0;
+  _attemptPlay(url);
+}
+
+function _attemptPlay(url) {
+  const isHls = url.includes(".m3u8");
+
+  if (isHls && typeof Hls !== "undefined" && Hls.isSupported()) {
+    hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
+    hlsInstance.loadSource(url);
+    hlsInstance.attachMedia(videoEl);
+    hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+      videoEl.play().catch(() => {});
+    });
+    hlsInstance.on(Hls.Events.ERROR, (_, data) => {
+      if (data.fatal) _onFatalError(url);
+    });
     return;
   }
-  retryCount += 1;
-  errorMessageEl.textContent = `Stream error. Retrying ${retryCount}/${MAX_RETRY} in 5s...`;
-  setTimeout(() => playChannelStream(url), RETRY_DELAY);
+
+  if (isHls && videoEl.canPlayType("application/vnd.apple.mpegurl")) {
+    videoEl.src = url;
+    videoEl.play().catch(() => _onFatalError(url));
+    return;
+  }
+
+  videoEl.src = url;
+  videoEl.play().catch(() => _onFatalError(url));
+  videoEl.onerror = () => _onFatalError(url);
 }
 
-function renderRelated(channels, current) {
-  relatedWrap.innerHTML = "";
-  channels
+function _onFatalError(url) {
+  if (retries < MAX_RETRIES) {
+    retries++;
+    errorEl.textContent = `Stream error — retrying ${retries}/${MAX_RETRIES} in 5 s…`;
+    setTimeout(() => _attemptPlay(url), RETRY_DELAY);
+  } else {
+    errorEl.textContent = "This stream is currently unavailable. Please try another channel.";
+  }
+}
+
+/* ── related channels ────────────────────────────────────── */
+function renderRelated(all, current) {
+  relatedEl.innerHTML = "";
+  const related = all
     .filter((c) => c.category === current.category && c.id !== current.id)
-    .slice(0, 10)
-    .forEach((channel) => {
-      const item = document.createElement("button");
-      item.className = "related-item";
-      item.type = "button";
-      item.textContent = channel.name;
-      item.addEventListener("click", () => {
-        window.location.href = `player.html?id=${encodeURIComponent(channel.id)}`;
-      });
-      relatedWrap.appendChild(item);
+    .slice(0, 12);
+
+  if (!related.length) {
+    relatedEl.innerHTML = '<p style="color:var(--muted);font-size:.85rem;">No related channels.</p>';
+    return;
+  }
+
+  related.forEach((ch) => {
+    const item = document.createElement("div");
+    item.className = "related-item";
+    item.innerHTML = `
+      <img class="related-logo" src="${ch.logo || ""}" alt="${ch.name}" loading="lazy"
+           onerror="this.style.display='none'" />
+      <span class="related-name">${ch.name}</span>`;
+    item.addEventListener("click", () => {
+      location.href = `player.html?id=${encodeURIComponent(ch.id)}`;
     });
+    relatedEl.appendChild(item);
+  });
 }
 
+/* ── main ────────────────────────────────────────────────── */
 async function initPlayer() {
+  initPlyr();
+
   try {
     const channels = await loadChannels();
-    const channel = channels.find((c) => c.id === channelId) || channels[0];
-    if (!channel) {
-      errorMessageEl.textContent = "No channels are available.";
-      return;
+    let channel = channels.find((c) => c.id === channelId) || channels[0];
+    if (!channel) { errorEl.textContent = "No channels available."; return; }
+
+    // try to find a working URL (primary + fallbacks)
+    const workingUrl = await loadWithFallback(channel);
+    if (!workingUrl) {
+      channel = channel; // keep showing info even if offline
+      errorEl.textContent = "All stream sources unavailable right now.";
     }
 
-    retryCount = 0;
-    channelNameEl.textContent = channel.name;
-    channelDescEl.textContent = channel.description || "No description available.";
+    nameEl.textContent    = channel.name;
+    descEl.textContent    = channel.description || "";
+    catEl.textContent     = channel.category;
+    countryEl.textContent = channel.country || "";
+    document.title        = `${channel.name} — IPTV Player`;
+
     localStorage.setItem("iptv_last_watched", JSON.stringify({
-      id: channel.id,
-      name: channel.name,
-      watchedAt: new Date().toISOString()
+      id: channel.id, name: channel.name, watchedAt: new Date().toISOString(),
     }));
 
     renderRelated(channels, channel);
-    playChannelStream(channel.url);
-  } catch (error) {
-    errorMessageEl.textContent = `Failed to load player: ${error.message}`;
+
+    if (workingUrl) playStream(workingUrl);
+  } catch (err) {
+    errorEl.textContent = `Failed to initialise player: ${err.message}`;
   }
 }
 
